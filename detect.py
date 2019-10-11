@@ -93,32 +93,40 @@ for arquivo in arquivos:
     if tipoArquivoAtual == 1:
         capArquivo=cv2.VideoCapture(arquivo)
 
-    while((cap != 0 and cap.isOpened()) or tipoArquivo == 0):
-        flag = flag+1
-        if cap == 1:
-            ret, frame = cap.read()
-        if cap==0 or ret==True:
-            img = frame
-            if flag <= 820:
-                continue
-            if flag >= 1000:
-                break
-            
-            try:
-                res = cv2.matchTemplate(frameArquivo, img, cv2.TM_CCOEFF_NORMED) # verifica a similiaridade
-                min_val, similaridade, min_loc, max_loc = cv2.minMaxLoc(res)
+    while((capArquivo != 0 and capArquivo.isOpened()) or tipoArquivoAtual == 0):
+        if tipoArquivoAtual == 1:
+            retArquivo, frameArquivo = capArquivo.read()
+        if(capArquivo == 0 or retArquivo==True):
+            while((cap != 0 and cap.isOpened()) or imgOrVideo == 0):
+                flag = flag+1
+                if imgOrVideo == 1:
+                    ret, frame = cap.read()
+                if cap==0 or ret==True:
+                    img = frame
+                    if flag <= 820:
+                        continue
+                    if flag >= 1000:
+                        break
+                    
+                    try:
+                        imgComparacao = np.hstack((img, frameArquivo))
+                        cv2.imshow("Comp", imgComparacao)
+                        cv2.waitKey(1000)
+                        res = cv2.matchTemplate(frameArquivo, img, cv2.TM_CCOEFF_NORMED) # verifica a similiaridade
+                        min_val, similaridade, min_loc, max_loc = cv2.minMaxLoc(res)
+                        
+                        if similaridade >= min_similidaridade: # está dentro
+                            print("Encontrou")
+                    except Exception as exp:
+                        print("ERROR AO ANALISAR")
+                        if imgOrVideo == 0:
+                            break;
+                        continue
+                else:
+                    break
                 
-                if similaridade >= min_similidaridade: # está dentro
-                    print("Encontrou")
-            except Exception as exp:
-                print("ERROR AO ANALISAR")
-                if tipoArquivo == 0:
+                if imgOrVideo == 0:     # não tem while se for apenas uma imagem
                     break;
-                continue
-        else:
-            break
-        
-        if imgOrVideo == 0: # não tem while se for apenas uma imagem
+        if tipoArquivoAtual == 0:        # não tem while se for apenas uma imagem
             break;
-
 cv2.destroyAllWindows()
