@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import sys, getopt
 import os
+import time
 import glob
 from matplotlib import pyplot as plt
 
@@ -62,8 +63,9 @@ if(imgOrVideo == -1):
     quit()
 
 if(imgOrVideo == 0):
+    print("Carregando query: " + query)
     frame = cv2.imread(query)
-
+    
 cap = 0
 if(imgOrVideo == 1):
     cap = cv2.VideoCapture(query)
@@ -87,6 +89,7 @@ for arquivo in arquivos:
     print("Analisando o arquivo: " + arquivo + " = > " + str(tipoArquivoAtual))
 
     if tipoArquivoAtual == 0:
+        print(".")
         frameArquivo = cv2.imread(arquivo)
         
     capArquivo = 0
@@ -109,16 +112,19 @@ for arquivo in arquivos:
                         break
                     
                     try:
-                        imgComparacao = np.hstack((img, frameArquivo))
-                        cv2.imshow("Comp", imgComparacao)
-                        cv2.waitKey(1000)
+                        cv2.imshow("Query", frame)
+                        cv2.imshow("Arquivo", frameArquivo)
+                        cv2.waitKey(50)
                         res = cv2.matchTemplate(frameArquivo, img, cv2.TM_CCOEFF_NORMED) # verifica a similiaridade
                         min_val, similaridade, min_loc, max_loc = cv2.minMaxLoc(res)
                         
-                        if similaridade >= min_similidaridade: # está dentro
-                            print("Encontrou")
+                        if similaridade >= min_similaridade: # está dentro
+                            print("Encontrou: " + str(similaridade))
+                        else:
+                            print("Nao encontrado")
                     except Exception as exp:
                         print("ERROR AO ANALISAR")
+                        print(exp)
                         if imgOrVideo == 0:
                             break;
                         continue
@@ -129,4 +135,5 @@ for arquivo in arquivos:
                     break;
         if tipoArquivoAtual == 0:        # não tem while se for apenas uma imagem
             break;
+            
 cv2.destroyAllWindows()
