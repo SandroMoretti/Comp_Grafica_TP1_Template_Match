@@ -5,7 +5,7 @@ import sys, getopt
 import os
 import time
 import glob
-from matplotlib import pyplot as plt
+
 
 def printHelp():
     print('python detect.py --min_similaridade <minimo de similaridade> --max_size <tamanho da lista de resultados> QUERY DIRETORIO')
@@ -31,6 +31,10 @@ min_similaridade = 0.75       # similaridade padrão
 max_size = -1               # infinito por padrão
 query = args[0]
 diretorio = args[1]
+
+
+arquivosSimilares = []
+
 
 for opt, arg in opts:
     if(opt == "-h" or opt == "--h"):
@@ -76,7 +80,7 @@ flag = 0
 arquivos=glob.glob(diretorio+"/*.png")
 arquivos.extend(glob.glob(diretorio+"/*.jpg"))
 arquivos.extend(glob.glob(diretorio+"/*.mp4"))
-arquivos.extend(glob.glob(diretorio+"/*.jpg"))
+arquivos.extend(glob.glob(diretorio+"/*.avi"))
 
 # arquivos = arquivos do diretorio
 # capArquivo = captura do video do arquivo do diretorio
@@ -89,39 +93,45 @@ for arquivo in arquivos:
     print("Analisando o arquivo: " + arquivo + " = > " + str(tipoArquivoAtual))
 
     if tipoArquivoAtual == 0:
-        print(".")
         frameArquivo = cv2.imread(arquivo)
         
     capArquivo = 0
     if tipoArquivoAtual == 1:
         capArquivo=cv2.VideoCapture(arquivo)
 
+
+    simArquivo = []
+
+
     while((capArquivo != 0 and capArquivo.isOpened()) or tipoArquivoAtual == 0):
         if tipoArquivoAtual == 1:
             retArquivo, frameArquivo = capArquivo.read()
         if(capArquivo == 0 or retArquivo==True):
+            if(cap!=0):
+                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
             while((cap != 0 and cap.isOpened()) or imgOrVideo == 0):
                 flag = flag+1
                 if imgOrVideo == 1:
                     ret, frame = cap.read()
                 if cap==0 or ret==True:
                     img = frame
-                    if flag <= 820:
-                        continue
-                    if flag >= 1000:
-                        break
+                    #if flag <= 820:
+                    #    continue
+                    #if flag >= 1000:
+                    #    break
                     
                     try:
-                        cv2.imshow("Query", frame)
-                        cv2.imshow("Arquivo", frameArquivo)
-                        cv2.waitKey(50)
-                        res = cv2.matchTemplate(frameArquivo, img, cv2.TM_CCOEFF_NORMED) # verifica a similiaridade
+                        #cv2.imshow("Query", frame)
+                        #cv2.imshow("Arquivo", frameArquivo)
+                        #cv2.waitKey(1)
+                        res = cv2.matchTemplate(img, frameArquivo, cv2.TM_CCOEFF_NORMED) # verifica a similiaridade
                         min_val, similaridade, min_loc, max_loc = cv2.minMaxLoc(res)
-                        
+
                         if similaridade >= min_similaridade: # está dentro
                             print("Encontrou: " + str(similaridade))
+                            simArquivo.append(similaridade)
                         else:
-                            print("Nao encontrado")
+                            print("Nao encontrado: " + str(similaridade))
                     except Exception as exp:
                         print("ERROR AO ANALISAR")
                         print(exp)
@@ -133,7 +143,26 @@ for arquivo in arquivos:
                 
                 if imgOrVideo == 0:     # não tem while se for apenas uma imagem
                     break;
-        if tipoArquivoAtual == 0:        # não tem while se for apenas uma imagem
+        else:
             break;
+        if tipoArquivoAtual == 0:       # não tem while se for apenas uma imagem
+            break;
+    simArquivo = np.array(simArquivo)
+    if simArquivo.size > 0:
+        mediaSimilaridade = simArquivo.mean()
+        arquivosSimilares.append((arquivo, mediaSimilaridade))
             
+
+
+if len(arquivosSimilares) > 0 and max_size > 0:
+    arquivosSimilares.sort(key=lambda x:x[1], reverse=True) # ordena a lista
+    print("Arquivos Similares: ")
+    count = 1
+    for arquivoSimilar in arquivosSimilares:
+        print(str(count) + " - " + arquivoSimilar[0] + ": " + str(round(arquivoSimilar[1]*100, 2)) + "%")
+        count=count+1
+        if count > max_size:
+            break;
+else:
+    print("Nenhum arquivo similar encontrado.")
 cv2.destroyAllWindows()
