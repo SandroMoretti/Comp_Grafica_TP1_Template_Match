@@ -28,7 +28,7 @@ if len(args) != 2:
     printHelp
 
 min_similaridade = 0.75       # similaridade padrão
-max_size = -1               # infinito por padrão
+max_size = 10000               # 10k default
 query = args[0]
 diretorio = args[1]
 
@@ -115,10 +115,6 @@ for arquivo in arquivos:
                     ret, frame = cap.read()
                 if cap==0 or ret==True:
                     img = frame
-                    #if flag <= 820:
-                    #    continue
-                    #if flag >= 1000:
-                    #    break
                     
                     try:
                         #cv2.imshow("Query", frame)
